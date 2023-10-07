@@ -1,0 +1,154 @@
+problem -1- max GEQ sum
+link -  https://codeforces.com/problemset/problem/1691/D
+concept involved -segment tree + monotonic stack 
+
+solution  -
+
+// all hail Infront of almighty lord krishna (jai shri krishna ji)
+#include<bits/stdc++.h>
+#ifndef  ONLINE_JUDGE
+#include "debug.h"
+#else
+#define print(...) 1;
+#endif
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+using namespace std;
+using namespace __gnu_pbds;
+#define int long long 
+const long long INF =1e18;
+template<class T>
+using ordered_set = tree<T, null_type, less<T>, rb_tree_tag, tree_order_statistics_node_update> ;
+template<typename T> 
+using ordered_multiset = tree<T, null_type,less_equal<T>, rb_tree_tag,tree_order_statistics_node_update>;
+const int N=1e6+10;
+
+
+vector<int> next_greater_element(vector<int>&a)
+{
+  int n=a.size();
+  stack<int>st;
+  vector<int>result(n,n);
+  for(int i=0;i<n;i++)
+  {
+    while(!st.empty() && a[st.top()]<a[i])
+    {
+       result[st.top()]=i;
+       st.pop();
+    }
+    st.push(i);
+  }
+  return result;
+}
+
+vector<int> previous_greater_element(vector<int>&a)
+{
+  int n=a.size();
+  stack<int>st;
+  vector<int>result(n,-1);
+  for(int i=n-1;i>=0;i--)
+  {
+    while(!st.empty() && a[st.top()]<a[i])
+    {
+       result[st.top()]=i;
+       st.pop();
+    }
+    st.push(i);
+  }
+  return result;
+}
+
+int query(vector<int>&tree,int node, int left, int right, int query_left, int query_right)
+{
+  if(right<query_left||left>query_right)
+  {
+    return -1e18;
+  }
+  if(query_left<=left&&right<=query_right)
+  {
+    return tree[node];
+  }
+  int mid=(left+right)/2;
+  return max(query(tree, 2*node,left,mid,query_left,query_right),query(tree,2*node+1,mid+1,right,query_left,query_right));
+}
+
+
+void Solve(int TEST_CASE)    
+{
+int n;
+cin>>n;
+vector<int>a(n);
+for(int i=0;i<n;i++)
+{
+  cin>>a[i];
+}
+vector<int>nge = next_greater_element(a);
+vector<int>pge = previous_greater_element(a);
+int new_n=n;
+while(__builtin_popcount(new_n)!=1)
+{
+  new_n++;
+}
+vector<int>psum(n,0),ssum(n,0);
+psum[0]=a[0];
+for(int i=1;i<n;i++)
+{
+  psum[i]=psum[i-1]+a[i];
+}
+ssum[n-1]=a[n-1];
+for(int i=n-2;i>=0;i--)
+{
+  ssum[i]=ssum[i+1]+a[i];
+}
+vector<int>prefix_tree(2*new_n,-1e18),suffix_tree(2*new_n,-1e18);
+for(int i=0;i<n;i++)
+{
+  prefix_tree[new_n+i]=psum[i];
+  suffix_tree[new_n+i]=ssum[i];
+}
+
+for(int i=new_n-1;i>=1;i--)
+{
+  suffix_tree[i]=max(suffix_tree[2*i],suffix_tree[2*i+1]);
+  prefix_tree[i]=max(prefix_tree[2*i],prefix_tree[2*i+1]);
+}
+
+for(int i=0;i<n;i++)
+{
+
+  int rightmax=query(prefix_tree,1,0,new_n-1,i+1,nge[i]-1)-psum[i];
+  int leftmax=query(suffix_tree,1,0,new_n-1,pge[i]+1,i-1)-ssum[i];
+  if(max(leftmax,rightmax)>0)
+  {
+    cout<<"NO"<<"\n";
+    return ;
+  }
+}
+cout<<"YES"<<"\n";
+
+
+}
+
+
+signed main()
+{ 
+  
+  auto begin = std::chrono::high_resolution_clock::now();
+    ios_base::sync_with_stdio(0);
+    cin.tie(0);
+    cout.precision(10);
+    cout.fixed;
+    int t = 1;
+    cin >> t;
+
+    for(int i = 1; i <= t; i++) 
+    {
+        // cout << "Case #" << i << ": ";
+        Solve(i);
+    }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+    // cerr << "Time measured: " << elapsed.count() * 1e-9 << " seconds.\n"; 
+    return 0; 
+         
+}
